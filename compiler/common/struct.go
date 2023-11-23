@@ -10,9 +10,9 @@ type StackItem struct {
 	Prev   *StackItem
 }
 
-type ParseNode struct {
+type ParseTreeNode struct {
 	Type      string
 	Attribute string
-	Left      *ParseNode
-	Right     *ParseNode
+	Left      *ParseTreeNode
+	Right     *ParseTreeNode
 }

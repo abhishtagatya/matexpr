@@ -6,114 +6,127 @@ import (
 	"matexpr/compiler/common"
 )
 
-func commaParse(tokens []common.Token, position int) (int, error) {
-
-	if tokens[position].Type != common.TSymComma {
-		return position, errors.New(fmt.Sprintf("SyntaxError: Expected SYM_COMMA, Got %s", tokens[position].Type))
-	}
-
-	return position, nil
-}
-
-func clpParse(tokens []common.Token, position int) (int, error) {
-
-	if tokens[position].Type == common.TSymClp {
-		return position, nil
-	}
-
-	return position, errors.New(fmt.Sprintf("SyntaxError: Expected SYM_CLP, Got %s", tokens[position].Type))
-}
-
-func oppParse(tokens []common.Token, position int) (int, error) {
-
-	if tokens[position].Type != common.TSymOpp {
-		return position, errors.New(fmt.Sprintf("SyntaxError: Expected SYM_OPP, Got %s", tokens[position].Type))
-	}
-
-	return position, nil
-}
-
-func numParse(tokens []common.Token, position int) (int, error) {
-
-	if tokens[position].Type == common.TNumeric {
-		return position, nil
-	}
-
-	return position, errors.New(fmt.Sprintf("SyntaxError: Expected NUMERIC, Got %s", tokens[position].Type))
-}
-
-func expParse(tokens []common.Token, position int) (int, error) {
-
-	if tokens[position].Type == common.TNumeric {
-		return numParse(tokens, position)
-	}
-
-	if tokens[position].Type == common.TFunction {
-		return funcParse(tokens, position)
-	}
-
-	return position, errors.New(fmt.Sprintf("SyntaxError: Expected NUMERIC or FUNCTION, Got %s", tokens[position].Type))
-}
-
-func funcParse(tokens []common.Token, position int) (int, error) {
+func funcExprParse(head *common.ParseTreeNode, tokens []common.Token) ([]common.Token, error) {
 
 	var err error
+	var currToken common.Token
 
-	if tokens[position].Type != common.TFunction {
-		return position, errors.New(fmt.Sprintf("SyntaxError: Expected FUNCTION, Got %s", tokens[position].Type))
+	currToken = tokens[0]
+	if currToken.Type != common.TSymOpp {
+		return tokens, errors.New(fmt.Sprintf("SyntaxError: Expected SYM_OPP, Got %s", currToken.Type))
 	}
 
-	position += 1
-	if position, err = oppParse(tokens, position); err != nil {
-		return position, err
+	tokens, err = leftExprParse(head, tokens[1:])
+	if err != nil {
+		return tokens, err
 	}
 
-	position += 1
-	if position, err = expParse(tokens, position); err != nil {
-		return position, err
+	currToken = tokens[0]
+	if currToken.Type != common.TSymComma {
+		return tokens, errors.New(fmt.Sprintf("SyntaxError: Expected SYM_COMMA, Got %s", currToken.Type))
 	}
 
-	position += 1
-	if position, err = commaParse(tokens, position); err != nil {
-		return position, err
+	tokens, err = rightExprParse(head, tokens[1:])
+	if err != nil {
+		return tokens, err
 	}
 
-	position += 1
-	if position, err = expParse(tokens, position); err != nil {
-		return position, err
+	currToken = tokens[0]
+	if currToken.Type != common.TSymClp {
+		return tokens, errors.New(fmt.Sprintf("SyntaxError: Expected SYM_CLP, Got %s", currToken.Type))
 	}
 
-	position += 1
-	if position, err = clpParse(tokens, position); err != nil {
-		return position, err
-	}
-
-	return position, nil
+	return tokens[1:], nil
 }
 
-func RecursiveParse(tokens []common.Token) error {
+func leftExprParse(head *common.ParseTreeNode, tokens []common.Token) ([]common.Token, error) {
+
+	var currToken = tokens[0]
+	if currToken.Type == common.TNumeric {
+		head.Left = &common.ParseTreeNode{
+			Type:      currToken.Type,
+			Attribute: currToken.Attribute,
+			Left:      nil,
+			Right:     nil,
+		}
+
+		return tokens[1:], nil
+	}
+
+	if currToken.Type == common.TFunction {
+		var nextNode = &common.ParseTreeNode{
+			Type:      currToken.Type,
+			Attribute: currToken.Attribute,
+		}
+		head.Left = nextNode
+
+		return funcExprParse(nextNode, tokens[1:])
+	}
+
+	return tokens, errors.New(fmt.Sprintf("SyntaxError: Expected NUMERIC or FUNCTION, Got %s", currToken.Type))
+}
+
+func rightExprParse(head *common.ParseTreeNode, tokens []common.Token) ([]common.Token, error) {
+
+	var currToken = tokens[0]
+	if currToken.Type == common.TNumeric {
+		head.Right = &common.ParseTreeNode{
+			Type:      currToken.Type,
+			Attribute: currToken.Attribute,
+		}
+		return tokens[1:], nil
+	}
+
+	if currToken.Type == common.TFunction {
+		var nextNode = &common.ParseTreeNode{
+			Type:      currToken.Type,
+			Attribute: currToken.Attribute,
+		}
+		head.Right = nextNode
+
+		return funcExprParse(nextNode, tokens[1:])
+	}
+
+	return tokens, errors.New(fmt.Sprintf("SyntaxError: Expected NUMERIC or FUNCTION, Got %s", currToken.Type))
+}
+
+func rootExprParse(head *common.ParseTreeNode, tokens []common.Token) (*common.ParseTreeNode, []common.Token, error) {
+
 	var err error
-	var position = 0
+	var currToken = tokens[0]
+
+	if currToken.Type == common.TFunction {
+		node := &common.ParseTreeNode{
+			Type:      currToken.Type,
+			Attribute: currToken.Attribute,
+			Left:      nil,
+			Right:     nil,
+		}
+		head = node
+
+		tokens, err = funcExprParse(node, tokens[1:])
+		return head, tokens, err
+	}
+
+	return nil, tokens, errors.New(fmt.Sprintf("SyntaxError: Expected FUNCTION, Got %s", currToken.Type))
+}
+
+func RecursiveDescent(tokens []common.Token) (*common.ParseTreeNode, error) {
+	var err error
+	var head *common.ParseTreeNode
 
 	tokens = append(tokens, common.Token{
 		Type:      common.TEndMark,
 		Attribute: "$",
 	})
 
-	if tokens[position].Type == common.TFunction {
-		if position, err = funcParse(tokens, position); err != nil {
-			return err
-		}
+	if head, tokens, err = rootExprParse(head, tokens); err != nil {
+		return nil, err
 	}
 
-	position += 1
-	if tokens[position].Type != common.TEndMark {
-		return errors.New(fmt.Sprintf("SyntaxError: Expected END_MARK, Got %s", tokens[position].Type))
+	if tokens[0].Type != common.TEndMark {
+		return nil, errors.New(fmt.Sprintf("SyntaxError: Expected ENM, Got %s", tokens[0].Type))
 	}
 
-	if position != len(tokens)-1 {
-		return errors.New("SyntaxError: Invalid Syntax")
-	}
-
-	return nil
+	return head, nil
 }
