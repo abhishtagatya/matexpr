@@ -23,6 +23,24 @@ var CommaRE = regexp.MustCompile(`,`)
 var SpaceRE = regexp.MustCompile(`\s+`)
 var CommentRE = regexp.MustCompile(`/\*.*\*/`)
 
+var FuncMap = map[string]string{
+	"add": "+",
+	"sub": "-",
+	"mul": "*",
+	"div": "/",
+	"mod": "%",
+	"pow": "^",
+}
+
+var PrecedenceMap = map[string]int{
+	"add": 1,
+	"sub": 1,
+	"mul": 2,
+	"div": 2,
+	"mod": 2,
+	"pow": 3,
+}
+
 // EXPR -> FUNC( EXPR , EXPR )
 // EXPR -> NUMBER | EXPR
 
