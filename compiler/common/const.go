@@ -2,79 +2,47 @@ package common
 
 import "regexp"
 
-const TNumeric = "NUMERIC"
-const TFunction = "FUNCTION"
-const TSymOpp = "SYM_OPP"
-const TSymClp = "SYM_CLP"
-const TSymComma = "SYM_COMMA"
-const TComment = "COMMENT"
-const TWhitespace = "WHITESPACE"
-const TEndMark = "ENM"
+const TNumeric = "NUMERIC"       // Type for Numeric Token
+const TFunction = "FUNCTION"     // Type for Function Token
+const TSymOpp = "SYM_OPP"        // Type for Open Parenthesis (Symbol) Token
+const TSymClp = "SYM_CLP"        // Type for Close Parenthesis (Symbol) Token
+const TSymComma = "SYM_COMMA"    // Type for Comma (Symbol) Token
+const TComment = "COMMENT"       // Type for Comment Token
+const TWhitespace = "WHITESPACE" // Type for Whitespace Token
+const TEndMark = "ENM"           // Type for End Marker ($) Token
 
-const RLE = "<"
-const LLE = ">"
-const LEQ = "="
+var FuncRE = regexp.MustCompile(`\b(add|sub|mul|div|mod|pow)\b`)                     // Regular Expression for Function
+var NumRE = regexp.MustCompile(`[+-]?(\d+([.]\d*)?(e[+-]?\d+)?|[.]\d+(e[+-]?\d+)?)`) // Regular Expression for Numeric (with Scientific Notation Enabled)
+var OpParRE = regexp.MustCompile(`\(`)                                               // Regular Expression for Open Parenthesis
+var ClParRE = regexp.MustCompile(`\)`)                                               // Regular Expression for Closed Parenthesis
+var CommaRE = regexp.MustCompile(`,`)                                                // Regular Expression for Comma
+var SpaceRE = regexp.MustCompile(`\s+`)                                              // Regular Expression for Whitespace
+var CommentRE = regexp.MustCompile(`/\*.*\*/`)                                       // Regular Expression for Comment
 
-var FuncRE = regexp.MustCompile(`\b(add|sub|mul|div|mod|pow)\b`)
-var NumRE = regexp.MustCompile(`[+-]?(\d+([.]\d*)?(e[+-]?\d+)?|[.]\d+(e[+-]?\d+)?)`)
-var OpParRE = regexp.MustCompile(`\(`)
-var ClParRE = regexp.MustCompile(`\)`)
-var CommaRE = regexp.MustCompile(`,`)
-var SpaceRE = regexp.MustCompile(`\s+`)
-var CommentRE = regexp.MustCompile(`/\*.*\*/`)
+// FAdd FSub FMul FDiv FMod FPow Function Name Constants
+const FAdd = "add"
+const FSub = "sub"
+const FMul = "mul"
+const FDiv = "div"
+const FMod = "mod"
+const FPow = "pow"
 
+// FuncMap Conversion of function names to mathematical symbols
 var FuncMap = map[string]string{
-	"add": "+",
-	"sub": "-",
-	"mul": "*",
-	"div": "/",
-	"mod": "%",
-	"pow": "^",
+	FAdd: "+",
+	FSub: "-",
+	FMul: "*",
+	FDiv: "/",
+	FMod: "%",
+	FPow: "^",
 }
 
+// PrecedenceMap Lookup for function precedence
 var PrecedenceMap = map[string]int{
-	"add": 1,
-	"sub": 1,
-	"mul": 2,
-	"div": 2,
-	"mod": 2,
-	"pow": 3,
-}
-
-// EXPR -> FUNC( EXPR , EXPR )
-// EXPR -> NUMBER | EXPR
-
-// F -> ID T
-// T -> < ( P ) >
-// P -> < E , E >
-// E -> F | NUM | E
-
-var OpTable = map[string]map[string]string{
-	TEndMark: {
-		TFunction: RLE,
-		TSymClp:   LLE,
-	},
-	TNumeric: {
-		TSymClp:   LLE,
-		TSymComma: LLE,
-	},
-	TFunction: {
-		TSymOpp:  RLE,
-		TSymClp:  LLE,
-		TEndMark: LLE,
-	},
-	TSymOpp: {
-		TNumeric:  RLE,
-		TFunction: RLE,
-		TSymComma: RLE, // Flat
-		TSymClp:   LLE,
-	},
-	TSymClp: {
-		TSymComma: LLE,
-	},
-	TSymComma: {
-		TNumeric:  RLE,
-		TFunction: RLE,
-		TSymClp:   LLE,
-	},
+	FAdd: 1,
+	FSub: 1,
+	FMul: 2,
+	FDiv: 2,
+	FMod: 2,
+	FPow: 3,
 }

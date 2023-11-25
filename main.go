@@ -31,7 +31,7 @@ func main() {
 		return
 	}
 
-	translation, err := generator.StackTranslate(pst)
+	translation := generator.PostfixTranslate(pst)
 	if err != nil {
 		fmt.Println(err.Error())
 		return

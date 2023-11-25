@@ -3,30 +3,26 @@ package generator
 import (
 	"fmt"
 	"matexpr/compiler/common"
-	"strings"
 )
 
-func updateString(translation *strings.Builder, x, y, operator string) {
-	translation.WriteString(
-		fmt.Sprintf(
-			"%s %s %s",
-			x, operator, y,
-		),
-	)
-}
+// buildStackPostfix Creates Stacks from Abstract Syntax Tree through DFS Visits
+// Result is a Stack in the order of Postfix Notation of our target code
+func buildStackPostfix(root *common.ParseTreeNode) *common.StackItem {
 
-func buildStack(root *common.ParseTreeNode) *common.StackItem {
 	var opStack *common.StackItem
 
-	queue := []*common.ParseTreeNode{root}
-	for len(queue) > 0 {
-		pq := queue[0]
+	stack := []*common.ParseTreeNode{root}
+
+	for len(stack) > 0 {
+		pq := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
 		if pq.Left != nil {
-			queue = append(queue, pq.Left)
+			stack = append(stack, pq.Left)
 		}
 
 		if pq.Right != nil {
-			queue = append(queue, pq.Right)
+			stack = append(stack, pq.Right)
 		}
 
 		newStack := &common.StackItem{
@@ -34,62 +30,64 @@ func buildStack(root *common.ParseTreeNode) *common.StackItem {
 			Prev:   opStack,
 		}
 		opStack = newStack
-
-		queue = queue[1:]
 	}
 
 	return opStack
 }
 
-func StackTranslate(root *common.ParseTreeNode) (string, error) {
+// PostfixTranslate Translates the Abstract Syntax Tree through Stack
+// of Postfix to Infix Notation
+func PostfixTranslate(root *common.ParseTreeNode) string {
+	var opStack = buildStackPostfix(root)
+	var infixStack *common.StackItem
 
-	var translation strings.Builder
-
-	var opStack = buildStack(root)
-	var tempStack *common.StackItem
-
-	var prevPrecedence = 4 // Set to Highest Precedence
+	var prevPrecedence = 4
 
 	for opStack != nil {
 		currStack := opStack.Object.(*common.ParseTreeNode)
 		if currStack.Type == common.TFunction {
-			xTemp := tempStack.Object.(*common.ParseTreeNode)
-			tempStack = tempStack.Prev
+			var result string
+			yItem := infixStack.Object.(*common.ParseTreeNode)
+			infixStack = infixStack.Prev
 
-			if translation.Len() > 0 {
-				yTemp := translation.String()
-				translation.Reset()
+			xItem := infixStack.Object.(*common.ParseTreeNode)
+			infixStack = infixStack.Prev
 
-				if common.PrecedenceMap[currStack.Attribute] > prevPrecedence {
-					yTemp = fmt.Sprintf("(%s)", yTemp)
-				}
-				prevPrecedence = common.PrecedenceMap[currStack.Attribute]
-
-				updateString(&translation, xTemp.Attribute, yTemp, common.FuncMap[currStack.Attribute])
+			if common.PrecedenceMap[currStack.Attribute] > prevPrecedence {
+				result = fmt.Sprintf("%s %s (%s)",
+					xItem.Attribute, common.FuncMap[currStack.Attribute], yItem.Attribute,
+				)
+				fmt.Println(common.PrecedenceMap[currStack.Attribute], prevPrecedence, common.FuncMap[currStack.Attribute])
 
 			} else {
-				yTemp := tempStack.Object.(*common.ParseTreeNode).Attribute
-				tempStack = tempStack.Prev
-
-				if common.PrecedenceMap[currStack.Attribute] > prevPrecedence {
-					yTemp = fmt.Sprintf("(%s)", yTemp)
-				}
-				prevPrecedence = common.PrecedenceMap[currStack.Attribute]
-
-				updateString(&translation, xTemp.Attribute, yTemp, common.FuncMap[currStack.Attribute])
+				result = fmt.Sprintf("%s %s %s",
+					xItem.Attribute, common.FuncMap[currStack.Attribute], yItem.Attribute,
+				)
 			}
-		}
+			prevPrecedence = common.PrecedenceMap[currStack.Attribute]
 
-		if currStack.Type == common.TNumeric {
-			newTemp := &common.StackItem{
+			newInfix := &common.StackItem{
+				Object: &common.ParseTreeNode{
+					Type:      common.TNumeric,
+					Attribute: result,
+				},
+				Prev: infixStack,
+			}
+
+			infixStack = newInfix
+		} else {
+			newInfix := &common.StackItem{
 				Object: currStack,
-				Prev:   tempStack,
+				Prev:   infixStack,
 			}
-			tempStack = newTemp
+
+			infixStack = newInfix
 		}
 
 		opStack = opStack.Prev
 	}
 
-	return translation.String(), nil
+	finalResult := infixStack.Object.(*common.ParseTreeNode).Attribute
+
+	return finalResult
 }

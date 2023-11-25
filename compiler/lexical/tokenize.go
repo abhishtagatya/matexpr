@@ -7,6 +7,8 @@ import (
 )
 
 // Tokenize Source Input to List of Tokens (Type, Attribute) Tuple -> ([]Token, error)
+// Using Regular Expression to Find Strings that fulfills the expression
+// to classify their types, otherwise LexicalError is raised
 func Tokenize(source string, optimize bool) ([]common.Token, error) {
 
 	var tokens []common.Token
@@ -72,11 +74,12 @@ func Tokenize(source string, optimize bool) ([]common.Token, error) {
 			continue
 		}
 
-		// If outside the FA or Language
+		// If outside the language scope
 		return nil, errors.New(fmt.Sprintf("LexicalError: Unidentified token type for `%s`", cSource))
 	}
 
 	// Optimize To Remove Unessential
+	// Whitespaces and Comments are omitted for parsing matters
 	if optimize {
 		var optTokens []common.Token
 		for _, token := range tokens {
