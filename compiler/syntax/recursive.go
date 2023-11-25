@@ -17,7 +17,7 @@ Rule Explanation :
 */
 
 // funcExprParse Parse Function Components : FUNC -> sym_opp EXPR comma EXPR sym_clp
-func funcExprParse(head *common.ParseTreeNode, tokens []common.Token) ([]common.Token, error) {
+func funcExprParse(head *common.SyntaxTreeNode, tokens []common.Token) ([]common.Token, error) {
 
 	var err error
 	var currToken common.Token
@@ -56,11 +56,11 @@ func funcExprParse(head *common.ParseTreeNode, tokens []common.Token) ([]common.
 }
 
 // leftExprParse Parse Left Side of Expression to Fill in head.Left
-func leftExprParse(head *common.ParseTreeNode, tokens []common.Token) ([]common.Token, error) {
+func leftExprParse(head *common.SyntaxTreeNode, tokens []common.Token) ([]common.Token, error) {
 
 	var currToken = tokens[0]
 	if currToken.Type == common.TNumeric {
-		head.Left = &common.ParseTreeNode{
+		head.Left = &common.SyntaxTreeNode{
 			Type:      currToken.Type,
 			Attribute: currToken.Attribute,
 			Left:      nil,
@@ -71,7 +71,7 @@ func leftExprParse(head *common.ParseTreeNode, tokens []common.Token) ([]common.
 	}
 
 	if currToken.Type == common.TFunction {
-		var nextNode = &common.ParseTreeNode{
+		var nextNode = &common.SyntaxTreeNode{
 			Type:      currToken.Type,
 			Attribute: currToken.Attribute,
 		}
@@ -84,11 +84,11 @@ func leftExprParse(head *common.ParseTreeNode, tokens []common.Token) ([]common.
 }
 
 // rightExprParse Parse Right Side of Expression to Fill in head.Right
-func rightExprParse(head *common.ParseTreeNode, tokens []common.Token) ([]common.Token, error) {
+func rightExprParse(head *common.SyntaxTreeNode, tokens []common.Token) ([]common.Token, error) {
 
 	var currToken = tokens[0]
 	if currToken.Type == common.TNumeric {
-		head.Right = &common.ParseTreeNode{
+		head.Right = &common.SyntaxTreeNode{
 			Type:      currToken.Type,
 			Attribute: currToken.Attribute,
 		}
@@ -96,7 +96,7 @@ func rightExprParse(head *common.ParseTreeNode, tokens []common.Token) ([]common
 	}
 
 	if currToken.Type == common.TFunction {
-		var nextNode = &common.ParseTreeNode{
+		var nextNode = &common.SyntaxTreeNode{
 			Type:      currToken.Type,
 			Attribute: currToken.Attribute,
 		}
@@ -109,13 +109,13 @@ func rightExprParse(head *common.ParseTreeNode, tokens []common.Token) ([]common
 }
 
 // rootExprParse Parse Root Expression (Look for Function Only) and Create head
-func rootExprParse(head *common.ParseTreeNode, tokens []common.Token) (*common.ParseTreeNode, []common.Token, error) {
+func rootExprParse(head *common.SyntaxTreeNode, tokens []common.Token) (*common.SyntaxTreeNode, []common.Token, error) {
 
 	var err error
 	var currToken = tokens[0]
 
 	if currToken.Type == common.TFunction {
-		node := &common.ParseTreeNode{
+		node := &common.SyntaxTreeNode{
 			Type:      currToken.Type,
 			Attribute: currToken.Attribute,
 			Left:      nil,
@@ -132,9 +132,9 @@ func rootExprParse(head *common.ParseTreeNode, tokens []common.Token) (*common.P
 
 // RecursiveDescent Parses Top-Down through recursion of Grammatical Rules (Rules Identified Above)
 // Creates a Abstract Syntax Tree for Further Processing
-func RecursiveDescent(tokens []common.Token) (*common.ParseTreeNode, error) {
+func RecursiveDescent(tokens []common.Token) (*common.SyntaxTreeNode, error) {
 	var err error
-	var head *common.ParseTreeNode
+	var head *common.SyntaxTreeNode
 
 	// Set End Mark and End of Line
 	tokens = append(tokens, common.Token{

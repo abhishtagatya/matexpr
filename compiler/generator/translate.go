@@ -5,13 +5,13 @@ import (
 	"matexpr/compiler/common"
 )
 
-// buildStackPostfix Creates Stacks from Abstract Syntax Tree through DFS Visits
+// buildStackPostfix Creates Stacks from Abstract Syntax Tree through Post Order Traversal
 // Result is a Stack in the order of Postfix Notation of our target code
-func buildStackPostfix(root *common.ParseTreeNode) *common.StackItem {
+func buildStackPostfix(root *common.SyntaxTreeNode) *common.StackItem {
 
 	var opStack *common.StackItem
 
-	stack := []*common.ParseTreeNode{root}
+	stack := []*common.SyntaxTreeNode{root}
 
 	for len(stack) > 0 {
 		pq := stack[len(stack)-1]
@@ -37,28 +37,26 @@ func buildStackPostfix(root *common.ParseTreeNode) *common.StackItem {
 
 // PostfixTranslate Translates the Abstract Syntax Tree through Stack
 // of Postfix to Infix Notation
-func PostfixTranslate(root *common.ParseTreeNode) string {
+func PostfixTranslate(root *common.SyntaxTreeNode) string {
 	var opStack = buildStackPostfix(root)
 	var infixStack *common.StackItem
 
 	var prevPrecedence = 4
 
 	for opStack != nil {
-		currStack := opStack.Object.(*common.ParseTreeNode)
+		currStack := opStack.Object.(*common.SyntaxTreeNode)
 		if currStack.Type == common.TFunction {
 			var result string
-			yItem := infixStack.Object.(*common.ParseTreeNode)
+			yItem := infixStack.Object.(*common.SyntaxTreeNode)
 			infixStack = infixStack.Prev
 
-			xItem := infixStack.Object.(*common.ParseTreeNode)
+			xItem := infixStack.Object.(*common.SyntaxTreeNode)
 			infixStack = infixStack.Prev
 
 			if common.PrecedenceMap[currStack.Attribute] > prevPrecedence {
 				result = fmt.Sprintf("%s %s (%s)",
 					xItem.Attribute, common.FuncMap[currStack.Attribute], yItem.Attribute,
 				)
-				fmt.Println(common.PrecedenceMap[currStack.Attribute], prevPrecedence, common.FuncMap[currStack.Attribute])
-
 			} else {
 				result = fmt.Sprintf("%s %s %s",
 					xItem.Attribute, common.FuncMap[currStack.Attribute], yItem.Attribute,
@@ -67,7 +65,7 @@ func PostfixTranslate(root *common.ParseTreeNode) string {
 			prevPrecedence = common.PrecedenceMap[currStack.Attribute]
 
 			newInfix := &common.StackItem{
-				Object: &common.ParseTreeNode{
+				Object: &common.SyntaxTreeNode{
 					Type:      common.TNumeric,
 					Attribute: result,
 				},
@@ -87,7 +85,7 @@ func PostfixTranslate(root *common.ParseTreeNode) string {
 		opStack = opStack.Prev
 	}
 
-	finalResult := infixStack.Object.(*common.ParseTreeNode).Attribute
+	finalResult := infixStack.Object.(*common.SyntaxTreeNode).Attribute
 
 	return finalResult
 }
