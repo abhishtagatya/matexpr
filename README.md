@@ -21,16 +21,16 @@ of the compilers and how this program implements those components to obtain the 
 #### Lexical Analyzer (Scanner)
 
 The lexical analyzer is responsible for tokenizing the input string. The process of tokenization can be further
-found in [tokenize.go](compiler%2Flexical%2Ftokenize.go), where it utilizes [Regular Expression](https://pkg.go.dev/regexp) to identify lexemes
-of the input string. The regular expressions can be found in [const.go](compiler%2Fcommon%2Fconst.go).
+explored in [tokenize.go](compiler%2Flexical%2Ftokenize.go), where it utilizes [Regular Expression](https://pkg.go.dev/regexp) to identify lexemes
+of the input string. The regular expressions are in [const.go](compiler%2Fcommon%2Fconst.go).
 
 ```plain/txt
 Input  : "add(5, mul(10,32.3e+10))"
 Output : [{FUNCTION add} {SYM_OPP (} {NUMERIC 5} {SYM_COMMA ,} {FUNCTION add} {SYM_OPP (} {NUMERIC 10} {SYM_COMMA ,} {NUMERIC 32.3e+10} {SYM_CLP )} {SYM_CLP )}]
 ```
 
-During incorrect scanning, the program will raise a `LexicalError` signifying that there are unknown lexemes / character
-that doesnt fit any of the regular expressions.
+During incorrect scanning, the program will raise a `LexicalError` signifying that there are unknown lexemes/character
+that doesn't fit any of the regular expressions for this language.
 
 ```plain/txt
 Input  : "add(5,gcd(10, 5))"
@@ -39,7 +39,7 @@ Output : "LexicalError: Unidentified token type for `gcd(10, 5))`"
 
 #### Syntax Analyzer (Parser)
 
-The parser utilizes Top-Down Parsing of Recursive Descent. This process is tailored towards the requirements grammatical rules
+The parser utilizes Top-Down Parsing of Recursive Descent. This process is tailored towards the requirements of grammatical rules
 and is executed if tokenization is successful. The implementation can be found in [recursive.go](compiler%2Fsyntax%2Frecursive.go).
 
 ```plain/text
@@ -53,7 +53,7 @@ Rule Explanation :
 ```
 
 The recursive descent implementation also creates an Abstract Syntax Tree
-upon which requires to operate Syntax Direct Translation. Here is Tree visualized with [PrintSyntaxTree](compiler%2Fcommon%2Fstruct.go) function.
+upon which Syntax Direct Translation with transform our expression. Here is the Tree visualized with [PrintSyntaxTree](compiler%2Fcommon%2Fstruct.go) function.
 
 ```plain\txt
 Input  : "add(5,sub(10, 5))"
