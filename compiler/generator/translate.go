@@ -53,8 +53,16 @@ func PostfixTranslate(root *common.SyntaxTreeNode) string {
 			xItem := infixStack.Object.(*common.SyntaxTreeNode)
 			infixStack = infixStack.Prev
 
-			if common.PrecedenceMap[currStack.Attribute] > prevPrecedence {
-				result = fmt.Sprintf("%s %s (%s)",
+			if common.PrecedenceMap[currStack.Attribute] >= prevPrecedence {
+				if xItem.Type == common.PFormedExpr {
+					xItem.Attribute = fmt.Sprintf("(%s)", xItem.Attribute)
+				}
+
+				if yItem.Type == common.PFormedExpr {
+					yItem.Attribute = fmt.Sprintf("(%s)", yItem.Attribute)
+				}
+
+				result = fmt.Sprintf("%s %s %s",
 					xItem.Attribute, common.FuncMap[currStack.Attribute], yItem.Attribute,
 				)
 			} else {
@@ -66,7 +74,7 @@ func PostfixTranslate(root *common.SyntaxTreeNode) string {
 
 			newInfix := &common.StackItem{
 				Object: &common.SyntaxTreeNode{
-					Type:      common.TNumeric,
+					Type:      common.PFormedExpr,
 					Attribute: result,
 				},
 				Prev: infixStack,
@@ -85,7 +93,9 @@ func PostfixTranslate(root *common.SyntaxTreeNode) string {
 		opStack = opStack.Prev
 	}
 
-	finalResult := infixStack.Object.(*common.SyntaxTreeNode).Attribute
+	if infixStack != nil {
+		return infixStack.Object.(*common.SyntaxTreeNode).Attribute
+	}
 
-	return finalResult
+	return "TranslationError: InfixStack is Empty"
 }
