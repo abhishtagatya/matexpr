@@ -11,8 +11,6 @@ const TComment = "COMMENT"       // Type for Comment Token
 const TWhitespace = "WHITESPACE" // Type for Whitespace Token
 const TEndMark = "ENM"           // Type for End Marker ($) Token
 
-const PFormedExpr = "PFE" // Parsed Form Expression
-
 var FuncRE = regexp.MustCompile(`\b(add|sub|mul|div|mod|pow)\b`)                     // Regular Expression for Function
 var NumRE = regexp.MustCompile(`[+-]?(\d+([.]\d*)?(e[+-]?\d+)?|[.]\d+(e[+-]?\d+)?)`) // Regular Expression for Numeric (with Scientific Notation Enabled)
 var OpParRE = regexp.MustCompile(`\(`)                                               // Regular Expression for Open Parenthesis
